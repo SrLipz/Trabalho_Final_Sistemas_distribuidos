@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.Arrays;
 import java.util.Random;
 
 public class Jogo {
@@ -8,8 +9,10 @@ public class Jogo {
     private ObjectOutputStream out2;
     private ObjectInputStream in1;
     private ObjectInputStream in2;
-    private int vidaDragao;
-    private int turno;
+    private int rodada = 1;
+    private int totalDeRodadas = 5;
+
+    private static final Random random = new Random();
 
     public Jogo(Jogador jogador1, Jogador jogador2, ObjectOutputStream out1, ObjectOutputStream out2, ObjectInputStream in1, ObjectInputStream in2) {
         this.jogador1 = jogador1;
@@ -18,102 +21,100 @@ public class Jogo {
         this.out2 = out2;
         this.in1 = in1;
         this.in2 = in2;
-        this.vidaDragao = 300; // Vida inicial do dragão
-        this.turno = 1; // Inicializa o turno como 1
     }
 
     public void iniciar() throws IOException, ClassNotFoundException {
-        // Mensagem inicial
-        enviarMensagem("A batalha final se dá início... de um lado temos um poderoso dragão com 300 de vida e do outro lado nossos heróis.");
-        enviarMensagem(jogador1.getNome() + " - " + jogador1.getClasse());
-        enviarMensagem(jogador2.getNome() + " - " + jogador2.getClasse());
+        // Incialização do jogo
+        enviarMensagem("Bem vindo ao General, esperamos que se divirta mais que um gordo na praça de alimentação ou que um drogado na cracolândia!\nBom jogo!");
+        enviarMensagem(jogador1.getNome() + " - pontos " + jogador1.getPontuacao());
+        enviarMensagem(jogador2.getNome() + " - pontos" + jogador2.getPontuacao());
 
-        while (vidaDragao > 0 && (jogador1.getVida() > 0 || jogador2.getVida() > 0)) {
+        while (rodada <= totalDeRodadas) {
             // Jogador 1 executa seu turno
             enviarStatus();
             executarTurno(jogador1, out1, in1, jogador2, out2);
-            if (vidaDragao <= 0 || (jogador1.getVida() <= 0 && jogador2.getVida() <= 0)) break;
 
             // Jogador 2 executa seu turno
             enviarStatus();
             executarTurno(jogador2, out2, in2, jogador1, out1);
-            if (vidaDragao <= 0 || (jogador1.getVida() <= 0 && jogador2.getVida() <= 0)) break;
 
-            // Ação do dragão
-            enviarStatus();
-            acaoDragao();
-
-            // Incrementa o turno
-            turno++;
+            // Avança para a próxima rodada.
+            rodada++;
         }
 
         // Verifica o vencedor
-        if (vidaDragao <= 0) {
-            enviarMensagem("Parabéns! Vocês derrotaram o dragão!");
-        } else {
-            enviarMensagem("O dragão derrotou os jogadores. Fim de jogo.");
-        }
+        enviarMensagem("Acabou o jogo");
     }
 
     private void enviarStatus() throws IOException {
-        String status = String.format("Turno %d:\nDragão com %d de vida\n%s com %d de vida\n%s com %d de vida\n",
-                turno, vidaDragao, jogador1.getNome(), jogador1.getVida(), jogador2.getNome(), jogador2.getVida());
+        String status = String.format("Rodada %d:\n%s com %d pontos\n%s com %d pontos\n" +
+                rodada, jogador1.getNome(), jogador1.getPontuacao(), jogador2.getNome(), jogador2.getPontuacao());
         out1.writeObject(status);
         out2.writeObject(status);
     }
 
     private void executarTurno(Jogador jogadorAtual, ObjectOutputStream outAtual, ObjectInputStream inAtual, Jogador outroJogador, ObjectOutputStream outOutro) throws IOException, ClassNotFoundException {
         // Informa ao jogador atual que é sua vez
-        outAtual.writeObject("Você está de frente com o poderoso Dragão, qual será sua ação:\n[ 1 ] Atacar\n[ 2 ] Defender\n[ 3 ] Tomar poção de cura");
+        outAtual.writeObject("Vamos negoney estamos prontos para ver você perder:\n[ 1 ] Jogar os dados");
 
         // Aguarda ação do jogador atual
         String acao = (String) inAtual.readObject();
         processarAcao(jogadorAtual, acao);
 
         // Informa ao outro jogador a ação do jogador atual
-        outOutro.writeObject("O jogador " + jogadorAtual.getNome() + " escolheu sua ação: " + acao);
+        outOutro.writeObject("O jogador " + jogadorAtual.getNome() + " Jogou os dados!");
     }
 
     private void processarAcao(Jogador jogador, String acao) throws IOException {
+        // Vai ser para validar os pontos
+        // Qual pontuação que ele atingiu na rodada
+
         switch (acao) {
             case "1":
-                int dano = calcularDano(jogador);
-                vidaDragao -= dano;
-                enviarMensagem(jogador.getNome() + " atacou o dragão e causou " + dano + " de dano!");
-                break;
-            case "2":
-                jogador.defender();
-                enviarMensagem(jogador.getNome() + " está em posição de defesa!");
-                break;
-            case "3":
-                int vidaRecuperada = jogador.tomarPocao();
-                enviarMensagem(jogador.getNome() + " tomou uma poção de vida e recuperou " + vidaRecuperada + " de vida!");
+                int[] valorDosDados = rollDice();
+                enviarMensagem("Valor dos dados\n Dado 1: " +valorDosDados[0] + "\n Dado 2: " + valorDosDados[1] + "\nDado 3: "+ valorDosDados[2]+"\n");
+                int score = calculateScore(valorDosDados);
+                enviarMensagem("Pontuação da rodada: "+ score);
                 break;
             default:
-                enviarMensagem(jogador.getNome() + " não fez uma ação válida!");
+                enviarMensagem(jogador.getNome() + " perdeu a vez por jogada inválida, chora agora vacilão!");
                 break;
         }
-    }
-
-    private void acaoDragao() throws IOException {
-        Random random = new Random();
-        int alvo = random.nextInt(2);
-        Jogador jogadorAlvo = (alvo == 0) ? jogador1 : jogador2;
-
-        if (jogadorAlvo.getVida() > 0) {
-            int danoDragao = random.nextInt(30) + 1;
-            jogadorAlvo.receberDano(danoDragao);
-            enviarMensagem("O dragão atacou " + jogadorAlvo.getNome() + " e causou " + danoDragao + " de dano!");
-        }
-    }
-
-    private int calcularDano(Jogador jogador) {
-        Random random = new Random();
-        return random.nextInt(20) + 1;
     }
 
     private void enviarMensagem(String mensagem) throws IOException {
         out1.writeObject(mensagem);
         out2.writeObject(mensagem);
+    }
+
+    private static int[] rollDice() {
+        return new int[]{random.nextInt(6) + 1, random.nextInt(6) + 1, random.nextInt(6) + 1};
+    }
+
+    private static int calculateScore(int[] dice) {
+        Arrays.sort(dice);
+        if (isSequence(dice, 1, 2, 3)) {
+            return 12; // Menores Dados
+        } else if (isSequence(dice, 4, 5, 6)) {
+            return 18; // Maiores Dados
+        } else if (isTrio(dice)) {
+            return 20; // Trio
+        } else if (isDupla(dice)) {
+            return 18; // Dupla
+        } else {
+            return Arrays.stream(dice).sum(); // Simples
+        }
+    }
+
+    private static boolean isSequence(int[] dice, int... sequence) {
+        return Arrays.equals(dice, sequence);
+    }
+
+    private static boolean isTrio(int[] dice) {
+        return dice[0] == dice[1] && dice[1] == dice[2];
+    }
+
+    private static boolean isDupla(int[] dice) {
+        return (dice[0] == dice[1] || dice[1] == dice[2] || dice[0] == dice[2]);
     }
 }
