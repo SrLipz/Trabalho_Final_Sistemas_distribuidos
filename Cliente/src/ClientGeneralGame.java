@@ -39,29 +39,47 @@ public class ClientGeneralGame {
             }
 
             if (!socket.isClosed()) {
-                System.out.print("Digite seu nome: ");
-                String nome = scanner.nextLine();
+                System.out.print("Digite seu Name: ");
+                String Name = scanner.nextLine();
 
-                Jogador jogador = new Jogador(nome);
-                out.writeObject(jogador);
-            }
+                Player player = new Player(Name);
+                out.writeObject(player);
+                while (true) {
+                    String mensagem = (String) in.readObject();
 
-            while (true) {
-                String mensagem = (String) in.readObject();
+                    try {
+                        Thread.sleep(800);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
 
-                try {
-                    Thread.sleep(800);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    CleanTerminal();
+                    System.out.println(mensagem);
+
+
+                    if (mensagem.contains("Vamos negoney estamos prontos para ver você perder:")) {
+                        String acao = scanner.nextLine();
+                        out.writeObject(acao);
+                    }
                 }
+            } else {
+                while (true) {
+                    String mensagem = (String) in.readObject();
 
-                CleanTerminal();
-                System.out.println(mensagem);
+                    try {
+                        Thread.sleep(800);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    CleanTerminal();
+                    System.out.println(mensagem);
 
 
-                if (mensagem.contains("Vamos negoney estamos prontos para ver você perder:")) {
-                    String acao = scanner.nextLine();
-                    out.writeObject(acao);
+                    if (mensagem.contains("Vamos negoney estamos prontos para ver você perder:")) {
+                        String acao = scanner.nextLine();
+                        out.writeObject(acao);
+                    }
                 }
             }
 
