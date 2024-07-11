@@ -1,58 +1,63 @@
 import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class Cliente {
+public class ClientGeneralGame {
     private static final String HOST = "192.168.3.118";
       // private static final String HOST = "10.28.147.87";
-    private static final int PORTA = 12345;
+    private static final int PORT = 12345;
 
 
     public static void main(String[] args) {
-        try (Socket socket = new Socket(HOST, PORTA)) {
+        try (Socket socket = new Socket(HOST, PORT)) {
+
+            // Objeto de saída.
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+
+            // Objeto de entrada.
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+
+            // Inicializando o Scanner.
             Scanner scanner = new Scanner(System.in);
 
-            limparTerminal();
+            CleanTerminal();
+
+            // Mensagem Inicial do jogo.
             System.out.println("Bem vindo ao jogo General!");
+
+            //
             while (true) {
                 System.out.println("\nEscolha sua ação:\n[ 1 ] Entrar\n[ 2 ] Sair");
                 String entrada = scanner.nextLine();
                 if ("2".equals(entrada)) {
                     System.out.println("Saindo do jogo...");
+                    socket.close();
                     break;
                 } else if ("1".equals(entrada)) {
                     break;
                 }
             }
 
-            System.out.print("Digite seu nome: ");
-            String nome = scanner.nextLine();
+            if (!socket.isClosed()) {
+                System.out.print("Digite seu nome: ");
+                String nome = scanner.nextLine();
 
-
-            Jogador jogador = new Jogador(nome);
-            out.writeObject(jogador);
-
+                Jogador jogador = new Jogador(nome);
+                out.writeObject(jogador);
+            }
 
             while (true) {
                 String mensagem = (String) in.readObject();
 
-//                try {
-//                    Thread.sleep(800);
-//                } catch (InterruptedException e) {
-//                    throw new RuntimeException(e);
-//                }
+                try {
+                    Thread.sleep(800);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
 
-                limparTerminal();
+                CleanTerminal();
                 System.out.println(mensagem);
 
-                if(mensagem.equals("Acabou o jogo!")){
-                    System.out.println("Acabou o jogo!");
-                    break;
-                }
 
                 if (mensagem.contains("Vamos negoney estamos prontos para ver você perder:")) {
                     String acao = scanner.nextLine();
@@ -65,7 +70,8 @@ public class Cliente {
         }
     }
 
-    private static void limparTerminal() {
+    // Realiza a limpeza do terminal tanto no OS Linux quanto windows.
+    private static void CleanTerminal() {
         try {
             if (System.getProperty("os.name").contains("Windows")) {
                 new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();

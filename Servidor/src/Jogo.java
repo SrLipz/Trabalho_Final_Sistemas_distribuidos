@@ -43,8 +43,23 @@ public class Jogo {
         }
 
         System.out.println("Antes do Acabou o jogo");
-        // Verifica o vencedor
-        enviarMensagem("Acabou o jogo!");
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        String winner;
+
+        if(jogador1.getPontuacao() == jogador2.getPontuacao()){
+            enviarMensagem("Deu empate, nem pra vencer vocês servem!");
+        }else if(jogador1.getPontuacao() > jogador2.getPontuacao()){
+            enviarMensagem(String.format("O %s ganhou o jogo!!!!!\nTome seu biscoito!", jogador1.getNome()));
+        }else {
+            enviarMensagem(String.format("O %s ganhou o jogo!!!!!\nTome seu biscoito!", jogador2.getNome()));
+        }
     }
 
     private void enviarStatus() throws IOException {
