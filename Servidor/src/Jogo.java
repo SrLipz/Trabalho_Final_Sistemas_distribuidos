@@ -42,12 +42,13 @@ public class Jogo {
             rodada++;
         }
 
+        System.out.println("Antes do Acabou o jogo");
         // Verifica o vencedor
-        enviarMensagem("Acabou o jogo");
+        enviarMensagem("Acabou o jogo!");
     }
 
     private void enviarStatus() throws IOException {
-        String status = String.format("Rodada %d:\n%s com %d pontos\n%s com %d pontos\n" +
+        String status = String.format("Rodada %d:\n%s com %d pontos\n%s com %d pontos\n",
                 rodada, jogador1.getNome(), jogador1.getPontuacao(), jogador2.getNome(), jogador2.getPontuacao());
         out1.writeObject(status);
         out2.writeObject(status);
@@ -68,12 +69,15 @@ public class Jogo {
     private void processarAcao(Jogador jogador, String acao) throws IOException {
         // Vai ser para validar os pontos
         // Qual pontuação que ele atingiu na rodada
-
+        System.out.println(acao);
         switch (acao) {
             case "1":
                 int[] valorDosDados = rollDice();
                 enviarMensagem("Valor dos dados\n Dado 1: " +valorDosDados[0] + "\n Dado 2: " + valorDosDados[1] + "\nDado 3: "+ valorDosDados[2]+"\n");
                 int score = calculateScore(valorDosDados);
+                System.out.println("Bateu score");
+                jogador.AdicionarPontuacao(score);
+                System.out.println("Bateu depois score");
                 enviarMensagem("Pontuação da rodada: "+ score);
                 break;
             default:
